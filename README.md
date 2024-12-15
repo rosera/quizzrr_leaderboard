@@ -3,14 +3,9 @@
 A simple (in-memory) leaderboard implemented in:
 
 - [ ] Node.js
-- [ ] Go
+- [x] Go
 
 The Leaderboard APIs are functionally equivalent.
-JSON format includes :
-
-- [ ] game: game name
-- [ ] name: user name
-- [ ] score: user score
 
 An array is defined for each game dataset.
 
@@ -24,22 +19,41 @@ An array is defined for each game dataset.
 ]
 ```
 
+JSON format includes :
+
+| Field | Description |
+|-------|-------------|
+| game  | game identifier |
+| name  | user identifier |
+| score | points allocation |
+
+
 ## LIST Leaderboard
 
+The API uses the route signature `/games/{id}` where id is the gameID.
+
+__EXAMPLE:__
 ```bash
-curl https://localhost:8080/leaderboard?game=test
+curl http://localhost:8080/games/test
 ```
 
 ## ADD Leaderboard
 
+The API uses the route signature `/points/{id}` where id is the gameID.
+
+__EXAMPLE:__
 ```bash
-curl -X POST http://localhost:8080/leaderboard \ 
-   -H "Content-Type: application/json" \ 
-   -d '{ "game": "test", "name": "Rich", "score": 1000 }'
+curl -X POST http://localhost:8080/points/test \
+   -H "Content-Type: application/json" \
+   -d '{ "game": "quizzrr", "name": "Rich", "score": 1000 }'
+[{"game":"quizzrr","name":"Rich","score":1000}]
 ```
 
 ## DELETE Leaderboard
 
+The API uses the route signature `/ceases/{id}` where id is the gameID.
+
+__EXAMPLE:__
 ```bash
-curl -X DELETE http://localhost:8080/leaderboard/?game=test
+curl -X DELETE http://localhost:8080/ceases/test
 ```
