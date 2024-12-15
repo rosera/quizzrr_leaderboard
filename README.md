@@ -51,9 +51,9 @@ curl -X POST http://localhost:8080/points/test \
 
 ## DELETE Leaderboard
 
-The API uses the route signature `/ceases/{id}` where id is the gameID.
+The API uses the route signature `/cancels/{id}` where id is the gameID.
 
 __EXAMPLE:__
 ```bash
-curl -X DELETE http://localhost:8080/ceases/test
+curl -X DELETE http://localhost:8080/cancels/test
 ```

@@ -149,8 +149,8 @@ func main() {
 		}
 	})
 
-	// Ceases a game
-	http.HandleFunc("/ceases/{id}", func(w http.ResponseWriter, r *http.Request) {
+	// Cancels a game
+	http.HandleFunc("/cancels/{id}", func(w http.ResponseWriter, r *http.Request) {
 		// game := r.URL.Query().Get("game")
 		vars := strings.Split(r.URL.Path, "/")
 		gameID := vars[len(vars)-1]
