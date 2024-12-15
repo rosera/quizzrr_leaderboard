@@ -23,6 +23,11 @@ var (
 
 func getGameLeaderboardEntries(game string, w http.ResponseWriter) {
 
+  // Add Cors Headers
+  w.Header().Set("Access-Control-Allow-Origin", "*")
+  w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+  w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
 	if game == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprintf(w, "Error: Game parameter is required")
