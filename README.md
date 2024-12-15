@@ -5,6 +5,8 @@ A simple (in-memory) leaderboard implemented in:
 - [ ] Node.js
 - [x] Go
 
+![API Architecture](https://github.com/rosera/quizzrr_leaderboard/blob/main/screenshots/glb-http-api.png, "Architecture")
+
 The Leaderboard APIs are functionally equivalent.
 
 An array is defined for each game dataset.
