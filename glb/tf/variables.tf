@@ -31,7 +31,7 @@ variable "api_services" {
 
 # Default value passed in
 variable "api_service_deny" {
-  type        = bool 
+  type        = bool
   description = "Deny disable dependent services"
   default     = false
 }
@@ -49,58 +49,58 @@ variable "api_create_duration" {
 variable "vpc_network" {
   type        = string
   description = "Name of the VPC network to create."
-  default     = "dev-network" 
+  default     = "dev-network"
 }
 
 # Default value passed in
 variable "vpc_network_description" {
   type        = string
   description = "Custom VPC network."
-  default     = "Lab network" 
+  default     = "Lab network"
 }
 
 # Default value passed in
 variable "vpc_subnet" {
   type        = string
   description = "Name of the VPC subnetwork to create."
-  default     = "dev-subnet" 
+  default     = "dev-subnet"
 }
 
 # Default value passed in
 variable "vpc_subnet_cidr" {
   type        = string
   description = "VPC subnetwork to cidr."
-  default     = "10.1.0.0/16" 
+  default     = "10.1.0.0/16"
 }
 
 # Default value passed in
 variable "vpc_private_google_access" {
-  type        = bool 
+  type        = bool
   description = "VPC Private Google Access."
-  default     = true 
+  default     = true
 }
 
 # Default value passed in
 variable "vpc_flow_logs" {
-  type        = bool 
+  type        = bool
   description = "VPC Flow Logs."
-  default     = false 
+  default     = false
 }
 
 ## FW VARIABLES
 
 # Default value passed in
 variable "fw_gce_name" {
-  type        = string 
+  type        = string
   description = "The fw rulebase name."
-  default     = "network-allow-iap" 
+  default     = "network-allow-iap"
 }
 
 # Custom properties with defaults 
 variable "fw_gce_source_ranges" {
   type        = list(string)
   description = "The fw source ranges."
-  default     = [ "35.235.240.0/20" ]
+  default     = ["35.235.240.0/20"]
 }
 
 # Custom properties with defaults 
@@ -126,9 +126,9 @@ variable "fw_gce_protocol" {
 
 # Default value passed in
 variable "fw_gce_ports" {
-  type        = list
+  type        = list(any)
   description = "Traffic protocol."
-  default     = [ "22" ]
+  default     = ["22"]
 }
 
 
@@ -136,16 +136,16 @@ variable "fw_gce_ports" {
 
 # Default value passed in
 variable "gce_image_project" {
-  type        = string 
+  type        = string
   description = "The project hosting the compute image."
-  default     = "debian-cloud" 
+  default     = "debian-cloud"
 }
 
 # Default value passed in
 variable "gce_image_revision" {
-  type        = string 
+  type        = string
   description = "The compute image revision."
-  default     = "debian-12" 
+  default     = "debian-12"
 }
 
 # Custom properties with defaults 

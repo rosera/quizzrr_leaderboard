@@ -7,7 +7,7 @@ data "google_compute_image" "debian" {
 resource "google_compute_instance" "free_tier_vm" {
   name         = var.gce_instance_name
   machine_type = var.gce_instance_machine_type # Free tier eligible machine type
-  zone         = var.gcp_zone # Choose a zone within the selected region
+  zone         = var.gcp_zone                  # Choose a zone within the selected region
 
   boot_disk {
     initialize_params {
@@ -19,15 +19,15 @@ resource "google_compute_instance" "free_tier_vm" {
 
   network_interface {
     # network = "default"
-    network = google_compute_network.dev_network.id
-    subnetwork = google_compute_subnetwork.dev_subnet.id 
+    network    = google_compute_network.dev_network.id
+    subnetwork = google_compute_subnetwork.dev_subnet.id
     ## access_config {
     ##   # Allow external access to the VM
     ##   # nat_ip = "EXTERNAL"
     ## }
   }
 
-  tags = var.gce_instance_tags 
+  tags = var.gce_instance_tags
 
   metadata = {
     startup-script = <<EOF
@@ -55,6 +55,6 @@ resource "google_compute_instance" "free_tier_vm" {
   service_account {
     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
     # email  = google_service_account.default.email
-    scopes = var.gce_instance_scopes 
+    scopes = var.gce_instance_scopes
   }
 }
