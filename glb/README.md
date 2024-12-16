@@ -55,7 +55,10 @@ terraform apply
 
 ## Build Application
 
-
+1. Add Go to the Path
+```bash
+PATH=$PATH:/usr/local/bin/go/bin
+```
 
 ## Run as Systemd
 

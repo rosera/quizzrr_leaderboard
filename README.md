@@ -40,7 +40,7 @@ The API uses the route signature `/games/{id}` where id is the gameID.
 
 __EXAMPLE:__
 ```bash
-curl http://localhost:8080/games/test
+curl -X GET http://localhost:8080/games/test
 ```
 
 ## ADD Leaderboard

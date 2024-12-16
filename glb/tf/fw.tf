@@ -10,7 +10,7 @@ resource "google_compute_firewall" "network-allow-rule" {
 
   allow {
     protocol = var.fw_gce_protocol
-    ports    = var.fw_gce_ports
+    # ports    = var.fw_gce_ports
   }
 
   # Apply the rule to target_tags
