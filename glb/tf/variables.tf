@@ -49,7 +49,7 @@ variable "api_create_duration" {
 variable "vpc_network" {
   type        = string
   description = "Name of the VPC network to create."
-  default     = "dev_network" 
+  default     = "dev-network" 
 }
 
 # Default value passed in
@@ -63,7 +63,7 @@ variable "vpc_network_description" {
 variable "vpc_subnet" {
   type        = string
   description = "Name of the VPC subnetwork to create."
-  default     = "dev_subnet" 
+  default     = "dev-subnet" 
 }
 
 # Default value passed in
