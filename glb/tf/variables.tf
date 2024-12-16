@@ -87,6 +87,51 @@ variable "vpc_flow_logs" {
   default     = false 
 }
 
+## FW VARIABLES
+
+# Default value passed in
+variable "fw_gce_name" {
+  type        = string 
+  description = "The fw rulebase name."
+  default     = "network-allow-iap" 
+}
+
+# Custom properties with defaults 
+variable "fw_gce_source_ranges" {
+  type        = list(string)
+  description = "The fw source ranges."
+  default     = [ "35.235.240.0/20" ]
+}
+
+# Custom properties with defaults 
+variable "fw_gce_direction" {
+  type        = string
+  description = "The fw direction."
+  default     = "INGRESS"
+}
+
+# Custom properties with defaults 
+variable "fw_direction" {
+  type        = string
+  description = "The fw direction."
+  default     = "INGRESS"
+}
+
+# Default value passed in
+variable "fw_gce_protocol" {
+  type        = string
+  description = "Traffic protocol."
+  default     = "tcp"
+}
+
+# Default value passed in
+variable "fw_gce_ports" {
+  type        = list
+  description = "Traffic protocol."
+  default     = [ "22" ]
+}
+
+
 ## GCE VARIABLES
 
 # Default value passed in
