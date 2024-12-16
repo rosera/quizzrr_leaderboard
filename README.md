@@ -48,6 +48,10 @@ __EXAMPLE:__
 curl -X POST http://localhost:8080/points/test \
    -H "Content-Type: application/json" \
    -d '{ "game": "quizzrr", "name": "Rich", "score": 1000 }'
+```
+
+__EXPECTED OUTPUT__
+```json
 [{"game":"quizzrr","name":"Rich","score":1000}]
 ```
 

@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/rs/cors"
 	"log"
 	"net/http"
 	"sort"
@@ -22,155 +23,110 @@ var (
 	port         = 8080
 )
 
-func getGameLeaderboardEntries(game string, w http.ResponseWriter) {
-
-	// Add Cors Headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-	if game == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Error: Game parameter is required")
+// getGameLeaderboard view the leaderboard for a specific game
+func getGameLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if players, ok := leaderboards[game]; ok {
+
+	vars := strings.Split(r.URL.Path, "/")
+	gameID := vars[len(vars)-1]
+
+	// Check if gameID is empty before passing to the function
+	if gameID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Error: Game ID is required")
+		return
+	}
+
+	if players, ok := leaderboards[gameID]; ok {
+		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(players)
 	} else {
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprintf(w, "Leaderboard for %s not found", game)
+		fmt.Fprintf(w, "Leaderboard for %s not found", gameID)
 	}
 
 	return
 }
 
-func setGameLeaderboardScore(newPlayer Player, w http.ResponseWriter) {
-	// Add Cors Headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+// setScoreGameLeaderboard updates the leaderboard for a specific game
+func setScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
+	// Decode the incoming player data
+	var newPlayer Player
+	err := json.NewDecoder(r.Body).Decode(&newPlayer)
+	if err != nil {
+		http.Error(w, "Invalid request payload", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve the leaderboard for the game
 	leaderboard, ok := leaderboards[newPlayer.Game]
-
 	if !ok {
 		leaderboard = []Player{}
 	}
 
+	// Append the new player and sort the leaderboard by score (descending)
 	leaderboard = append(leaderboard, newPlayer)
-	// Sort based on score in descending order
 	sort.Slice(leaderboard, func(i, j int) bool {
 		return leaderboard[i].Score > leaderboard[j].Score
 	})
 
+	// Update the leaderboard
 	leaderboards[newPlayer.Game] = leaderboard
+
+	// Respond with the updated leaderboard
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(leaderboard)
 }
 
-func setGameLeaderBoardDelete(game string, w http.ResponseWriter) {
-	// Add Cors Headers
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Methods", "DELETE, OPTIONS")
-	w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+// setCancelGameLeaderboard cancels the leaderboard for a specific game
+func setCancelGameLeaderboard(w http.ResponseWriter, r *http.Request) {
+	vars := strings.Split(r.URL.Path, "/")
+	gameID := vars[len(vars)-1]
 
-	if game == "" {
+	// Check if gameID is empty before passing to the function
+	if gameID == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "Error: Game parameter is required")
+		fmt.Fprintf(w, "Error: Game ID is required")
 		return
 	}
 
-	delete(leaderboards, game)
+	delete(leaderboards, gameID)
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, fmt.Sprintf("Leaderboard for %s reset successfully", game))
+	fmt.Fprintf(w, fmt.Sprintf("Leaderboard for %s reset successfully", gameID))
+
 }
 
 func main() {
-
-	// Verify the API is running
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// Check if the request method is GET
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			fmt.Fprintf(w, "Method %s not allowed", r.Method)
-			return
-		}
-		// Respond with "I am here!" message
-		fmt.Fprintf(w, "Leaderboard REST API is Online!")
+	// Configure the CORS middleware
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"}, // Replace "*" with specific origins in production
+		AllowedMethods:   []string{"DELETE", "GET", "POST", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
 	})
 
-	// List Points associated with a game
-	http.HandleFunc("/games/{id}", func(w http.ResponseWriter, r *http.Request) {
-		// gameID := r.URL.Query().Get("game")
-		vars := strings.Split(r.URL.Path, "/")
-		gameID := vars[len(vars)-1]
+	// Wrap the default HTTP server with CORS middleware
+	http.Handle("/games/", c.Handler(http.HandlerFunc(getGameLeaderboard)))
+	// Register the handler function
+	// http.Handle("/getGameLeaderboard", handlerLeaderboard)
 
-		// Check if gameID is empty before passing to the function
-		if gameID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Error: Game ID is required")
-			return
-		}
+	// Wrap the default HTTP server with CORS middleware
+	http.Handle("/points/", c.Handler(http.HandlerFunc(setScoreGameLeaderboard)))
+	// Register the handler function
+	// http.Handle("/setScoreGameLeaderboard", handlerScores)
 
-		switch r.Method {
-		case http.MethodGet:
-			getGameLeaderboardEntries(gameID, w)
-
-		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			fmt.Fprintf(w, "Method %s not allowed", r.Method)
-		}
-	})
-
-	// Adds points to a game
-	http.HandleFunc("/points/{id}", func(w http.ResponseWriter, r *http.Request) {
-		vars := strings.Split(r.URL.Path, "/")
-		gameID := vars[len(vars)-1]
-
-		// Check if gameID is empty before passing to the function
-		if gameID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Error: Game ID is required")
-			return
-		}
-
-		switch r.Method {
-		case http.MethodPost:
-			var newPlayer Player
-			err := json.NewDecoder(r.Body).Decode(&newPlayer)
-			if err != nil || newPlayer.Name == "" || newPlayer.Score == 0 || newPlayer.Game == "" {
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprintf(w, "Error: Game, Name and Score are required")
-				return
-			}
-			setGameLeaderboardScore(newPlayer, w)
-
-		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			fmt.Fprintf(w, "Method %s not allowed", r.Method)
-		}
-	})
-
-	// Cancels a game
-	http.HandleFunc("/cancels/{id}", func(w http.ResponseWriter, r *http.Request) {
-		// game := r.URL.Query().Get("game")
-		vars := strings.Split(r.URL.Path, "/")
-		gameID := vars[len(vars)-1]
-
-		// Check if gameID is empty before passing to the function
-		if gameID == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprintf(w, "Error: Game ID is required")
-			return
-		}
-
-		switch r.Method {
-		case http.MethodDelete:
-			setGameLeaderBoardDelete(gameID, w)
-
-		default:
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			fmt.Fprintf(w, "Method %s not allowed", r.Method)
-		}
-	})
+	// Wrap the default HTTP server with CORS middleware
+	http.Handle("/cancels/", c.Handler(http.HandlerFunc(setCancelGameLeaderboard)))
+	// Register the handler function
+	// http.Handle("/setCancelGameLeaderboard", handlerCancel)
 
 	fmt.Println("Leaderboard REST API listening on port", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
