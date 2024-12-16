@@ -32,6 +32,10 @@ JSON format includes :
 
 ## LIST Leaderboard
 
+The API supports listing gameID Leaderboard entries.
+
+![List Leaderboard](https://github.com/rosera/quizzrr_leaderboard/blob/main/screenshots/glb-leaderboard-empty.png "View Leaderboard")
+
 The API uses the route signature `/games/{id}` where id is the gameID.
 
 __EXAMPLE:__
@@ -41,21 +45,29 @@ curl http://localhost:8080/games/test
 
 ## ADD Leaderboard
 
+The API supports adding gameID Leaderboard point entries.
+
+![Add Leaderboard](https://github.com/rosera/quizzrr_leaderboard/blob/main/screenshots/glb-leaderboard-add.png "Add to Leaderboard")
+
 The API uses the route signature `/points/{id}` where id is the gameID.
 
 __EXAMPLE:__
 ```bash
 curl -X POST http://localhost:8080/points/test \
    -H "Content-Type: application/json" \
-   -d '{ "game": "quizzrr", "name": "Rich", "score": 1000 }'
+   -d '{ "game": "test", "name": "Rich", "score": 1000 }'
 ```
 
 __EXPECTED OUTPUT__
 ```json
-[{"game":"quizzrr","name":"Rich","score":1000}]
+[{"game":"test","name":"Rich","score":1000}]
 ```
 
 ## DELETE Leaderboard
+
+The API supports deleting gameID Leaderboard.
+
+![Delete Leaderboard](https://github.com/rosera/quizzrr_leaderboard/blob/main/screenshots/glb-leaderboard-delete.png "Delete Leaderboard")
 
 The API uses the route signature `/cancels/{id}` where id is the gameID.
 
