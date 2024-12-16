@@ -17,8 +17,53 @@ go build
 ```
 
 
+## Environment 
+
+A Terraform configuration is included to setup the environment.
+The compute instance will run a startup-script and install the Go executables.
+
+1. Move to the `tf` folder
+
+2. Initiate Terraform
+```bash
+terraform init
+```
+
+3. Validate the Terraform
+```bash
+terraform validate
+```
+
+4. Create Terraform state 
+
+Add:
+
+| Field | Description |
+|-------|-------------|
+| project | PROJECT_ID |
+| region  | PROJECT_ID |
+
+```bash
+terraform plan --out tf.state
+```
+
+5. Initialise the resource using state
+
+```bash
+terraform apply
+```
+
+## Build Application
+
+1. Add Go to the Path
+```bash
+PATH=$PATH:/usr/local/bin/go/bin
+```
+
 ## Run as Systemd
 
+The virtual machine includes a user account `api-dev`.
+Run the application under this account.
 Use the following configuration to create a service on a Debian virtual machine.
 
 ```
