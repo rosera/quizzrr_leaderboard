@@ -24,6 +24,14 @@ curl -LO https://go.dev/dl/go1.23.4.linux-amd64.tar.gz
 rm -rf /usr/local/go && tar -C /tmp -xzf go1.23.4.linux-amd64.tar.gz
 ```
 
+Amend main.go variable to match:
+
+- [x] Internal IP of Host Machine
+- [x] PORT of Service e.g. 8080
+
+
+Build the binary
+
 ## Create a USER
 ```bash
 # Env Var

@@ -21,6 +21,7 @@ var (
 	// leaderboards is a map that stores leaderboards for different games
 	leaderboards = map[string][]Player{}
 	port         = 8080
+	ipAddress    = "10.1.0.4" 
 )
 
 // getGameLeaderboard view the leaderboard for a specific game
@@ -129,5 +130,6 @@ func main() {
 	// http.Handle("/setCancelGameLeaderboard", handlerCancel)
 
 	fmt.Println("Leaderboard REST API listening on port", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	// log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d",ipAddress, port), nil))
 }
