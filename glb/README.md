@@ -1,72 +1,57 @@
 # Leaderboard
 
-A quick in-memory leaderboard api to capture scores.
+## Create VM
 
-| Tool | Version |
-|------|---------|
-| Go   | 1.23    |
+A micro VM is required.
 
-## Configure
-```bash
-go build
-```
-
-## Run
-```bash
-./glb
-```
-
-
-## Environment 
-
-A Terraform configuration is included to setup the environment.
-The compute instance will run a startup-script and install the Go executables.
-
-1. Move to the `tf` folder
-
-2. Initiate Terraform
-```bash
-terraform init
-```
-
-3. Validate the Terraform
-```bash
-terraform validate
-```
-
-4. Create Terraform state 
-
-Add:
-
-| Field | Description |
-|-------|-------------|
-| project | PROJECT_ID |
-| region  | PROJECT_ID |
+## Install packages
 
 ```bash
-terraform plan --out tf.state
+#!/bin/bash
+# STARTUP-START
+apt-get update -y
+
+# Update package lists and install required packages
+apt-get install -y curl jq git
 ```
 
-5. Initialise the resource using state
+## Add Go
+```bash
+# Download Go
+curl -LO https://go.dev/dl/go1.23.4.linux-amd64.tar.gz 
+
+# Install Go
+rm -rf /usr/local/go && tar -C /tmp -xzf go1.23.4.linux-amd64.tar.gz
+```
+
+## Create a USER
+```
+# Env Var
+export USER="api-dev"
+
+# Create a user
+useradd $USER -m -p Password01 -s /bin/bash -c 'Developer Account'
+```
+
+## Add Systemctl Process
+
+Move the `glb` Go binary to the user account
 
 ```bash
-terraform apply
+sudo su -u api-dev
+mkdir ~/glb && cd $_
 ```
 
-## Build Application
-
-1. Add Go to the Path
+Clone the GLB repository
 ```bash
-PATH=$PATH:/usr/local/bin/go/bin
+git clone https://github.com/rosera/quizzrr_leaderboard.git
 ```
 
-## Run as Systemd
+Create a file `/home/api-dev/glb/glb` and copy the binary from the quizzrr_leaderboard/glb folder.
 
-The virtual machine includes a user account `api-dev`.
-Run the application under this account.
-Use the following configuration to create a service on a Debian virtual machine.
+Create a service `glb.service`
 
-```
+```bash
 [Unit]
 Description=Quizzrr Leaderboard service
 
@@ -82,4 +67,9 @@ RestartSec=5
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=%n
+```
+
+Start the service
+```bash
+systemctl start glb.service
 ```
