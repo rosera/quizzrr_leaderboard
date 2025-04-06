@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <div class="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+    <h1 class="text-3xl font-bold mb-4 text-center">Game Manager</h1>
+
+    <!-- BASE_URL Input -->
+    <div class="mb-6">
+      <label for="baseUrl" class="block text-sm font-medium">Leaderboard Base URL</label>
+      <input type="text" id="baseUrl" placeholder="http://localhost:8080" class="border p-2 rounded w-full mt-1" />
+    </div>
+
+
+    <!-- Tabs -->
+    <nav class="flex space-x-4 border-b mb-4">
+      <button onclick="switchTab('view', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">View</button>
+      <button onclick="switchTab('submit', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Submit</button>
+      <button onclick="switchTab('reset', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Reset</button>
+      <button onclick="switchTab('remove', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Remove</button>
+    </nav>
+
+    <div class="p-6 space-y-6">
+
+      <!-- View Leaderboard Tab -->
+      <div id="tab-view" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">Leaderboard View</h1>
+        <p>Use this option to view the Leaderboard information.<p>
+        <input id="viewGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <button onclick="viewLeaderboard()" class="bg-blue-500 text-white px-4 py-2 rounded">View Leaderboard</button>
+        <div id="leaderboardTable" class="mt-4 overflow-auto"></div>
+      </div>
+
+      <!-- Submit Score Tab -->
+      <div id="tab-submit" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">User Create</h1>
+        <p>Use this option to add a user to the Leaderboard information.<p>
+        <input id="submitGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <input id="submitPlayerName" type="text" placeholder="Player Name" class="border p-2 rounded w-full mb-2" />
+        <input id="submitScore" type="number" placeholder="Score" class="border p-2 rounded w-full mb-2" />
+        <button onclick="submitScore()" class="bg-green-500 text-white px-4 py-2 rounded">Submit Score</button>
+      </div>
+
+      <!-- Reset Leaderboard Tab -->
+      <div id="tab-reset" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">Leaderboard Reset</h1>
+        <p>Use this option to reset the Leaderboard information.<p>
+        <input id="resetGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <button onclick="resetLeaderboard()" class="bg-red-500 text-white px-4 py-2 rounded">Reset Leaderboard</button>
+      </div>
+
+      <!-- Remove Player Tab -->
+      <div id="tab-remove" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">User Delete</h1>
+        <p>Use this option to remove a user from the Leaderboard.<p>
+        <input id="removeGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <input id="removePlayerName" type="text" placeholder="Player Name" class="border p-2 rounded w-full mb-2" />
+        <button onclick="removePlayer()" class="bg-yellow-500 text-white px-4 py-2 rounded">Remove Player</button>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status" class="text-sm text-gray-700 mt-4"></div>
+    </div>
+  </div>
+
+  <script>
+    // Default tab
+    switchTab('view');
+
+    
+    function switchTab(tabId, button = null) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('border-blue-500', 'text-blue-600'));
+    
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    
+      // Highlight the tab button (if provided, or default to first matching tab)
+      if (button) {
+        button.classList.add('border-blue-500', 'text-blue-600');
+      } else {
+        const defaultBtn = [...document.querySelectorAll('.tab-btn')].find(btn => btn.textContent.toLowerCase().includes(tabId));
+        if (defaultBtn) defaultBtn.classList.add('border-blue-500', 'text-blue-600');
+      }
+    
+      document.getElementById('status').textContent = '';
+    }
+
+    function getBaseUrl() {
+      return document.getElementById('baseUrl').value.trim();
+    }
+
+    function viewLeaderboard() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('viewGameId').value.trim();
+      if (!gameId) return;
+
+      fetch(`${baseURL}/games/${gameId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error('Invalid response');
+          let html = `
+            <table class="table-auto w-full text-left border">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="p-2 border">Name</th>
+                  <th class="p-2 border">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${data.map(player => `
+                  <tr>
+                    <td class="p-2 border">${player.name}</td>
+                    <td class="p-2 border">${player.score}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>`;
+          document.getElementById('leaderboardTable').innerHTML = html;
+        })
+        .catch(() => {
+          document.getElementById('leaderboardTable').innerHTML = `<p class="text-red-600">⚠️ Failed to fetch leaderboard</p>`;
+        });
+    }
+
+    function submitScore() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('submitGameId').value.trim();
+      const playerName = document.getElementById('submitPlayerName').value.trim();
+      const score = parseInt(document.getElementById('submitScore').value.trim());
+
+      if (!gameId || !playerName || isNaN(score)) {
+        document.getElementById('status').textContent = "⚠️ All fields are required for submitting a score.";
+        return;
+      }
+
+      fetch(`${baseURL}/points/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: gameId, name: playerName, score })
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('status').textContent = "✅ Score submitted successfully!";
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to submit score.";
+        });
+    }
+
+    function resetLeaderboard() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('resetGameId').value.trim();
+      if (!gameId) return;
+
+      fetch(`${baseURL}/cancels/${gameId}`)
+        .then(res => res.text())
+        .then(message => {
+          document.getElementById('status').textContent = `✅ ${message}`;
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to reset leaderboard.";
+        });
+    }
+
+    function removePlayer() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('removeGameId').value.trim();
+      const playerName = document.getElementById('removePlayerName').value.trim();
+
+      if (!gameId || !playerName) {
+        document.getElementById('status').textContent = "⚠️ Game ID and Player Name are required.";
+        return;
+      }
+
+      fetch(`${baseURL}/remove/${gameId}/${playerName}`, {
+        method: 'DELETE',
+      })
+        .then(res => res.text().then(text => ({ ok: res.ok, status: res.status, message: text })))
+        .then(({ ok, message }) => {
+          document.getElementById('status').textContent = ok ? `✅ ${message}` : `❌ ${message}`;
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to remove player";
+        });
+    }
+  </script>
+
+</body>
+</html>
+
