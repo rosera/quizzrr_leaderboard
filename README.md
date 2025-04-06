@@ -75,3 +75,11 @@ __EXAMPLE:__
 ```bash
 curl -X DELETE http://localhost:8080/cancels/test
 ```
+
+## DELETE User
+
+The API supports deleting a user from the Leaderboard.
+
+```
+curl -X DELETE http://localhost:8080/remove/test/Rich
+```

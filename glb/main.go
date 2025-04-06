@@ -21,7 +21,7 @@ var (
 	// leaderboards is a map that stores leaderboards for different games
 	leaderboards = map[string][]Player{}
 	port         = 8080
-	ipAddress    = "10.1.0.4" 
+	ipAddress    = "0.0.0.0"
 )
 
 // getGameLeaderboard view the leaderboard for a specific game
@@ -105,6 +105,54 @@ func setCancelGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// removeScoreGameLeaderboard removes a player's score from the leaderboard
+func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := strings.Split(r.URL.Path, "/")
+	if len(vars) < 4 {
+		http.Error(w, "Invalid request format: /remove/{gameID}/{playerName}", http.StatusBadRequest)
+		return
+	}
+	gameID := vars[len(vars)-2]
+	playerName := vars[len(vars)-1]
+
+	if gameID == "" || playerName == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Error: Game ID and Player Name are required")
+		return
+	}
+
+	leaderboard, ok := leaderboards[gameID]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Leaderboard for %s not found", gameID)
+		return
+	}
+
+	found := false
+	newLeaderboard := []Player{}
+	for _, player := range leaderboard {
+		if player.Name != playerName {
+			newLeaderboard = append(newLeaderboard, player)
+		} else {
+			found = true
+		}
+	}
+
+	if found {
+		leaderboards[gameID] = newLeaderboard
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Score for player %s in game %s removed successfully", playerName, gameID)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Player %s not found in the leaderboard for %s", playerName, gameID)
+	}
+}
+
 func main() {
 	// Configure the CORS middleware
 	c := cors.New(cors.Options{
@@ -129,7 +177,10 @@ func main() {
 	// Register the handler function
 	// http.Handle("/setCancelGameLeaderboard", handlerCancel)
 
+	// Wrap the default HTTP server with CORS middleware for remove score
+	http.Handle("/remove/", c.Handler(http.HandlerFunc(removeScoreGameLeaderboard)))
+
 	fmt.Println("Leaderboard REST API listening on port", port)
 	// log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d",ipAddress, port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddress, port), nil))
 }
