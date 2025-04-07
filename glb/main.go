@@ -120,7 +120,15 @@ func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := vars[len(vars)-2]
-	playerName, err := url.PathUnescape(vars[len(vars)-1])
+	// playerName, err := url.PathUnescape(vars[len(vars)-1])
+	playerNameRaw := vars[len(vars)-1]
+  playerNameDecoded, err := url.PathUnescape(playerNameRaw)
+  if err != nil {
+  	http.Error(w, "Failed to decode player name", http.StatusBadRequest)
+  	return
+  }
+  playerName := strings.TrimSpace(playerNameDecoded)
+
 	if err != nil {
 		http.Error(w, "Failed to decode player name", http.StatusBadRequest)
 		return
