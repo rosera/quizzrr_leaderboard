@@ -17,10 +17,11 @@
       <input type="text" id="baseUrl" placeholder="http://localhost:8080" class="border p-2 rounded w-full mt-1" />
     </div>
 
-
     <!-- Tabs -->
     <nav class="flex space-x-4 border-b mb-4">
-      <button onclick="switchTab('view', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">View</button>
+      <button onclick="switchTab('view', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">
+        View <span id="viewCountBadge" class="ml-1 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full hidden">0</span>
+      </button>
       <button onclick="switchTab('submit', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Submit</button>
       <button onclick="switchTab('reset', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Reset</button>
       <button onclick="switchTab('remove', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Remove</button>
@@ -99,33 +100,44 @@
       const baseURL = getBaseUrl();
       const gameId = document.getElementById('viewGameId').value.trim();
       if (!gameId) return;
-
+    
       fetch(`${baseURL}/games/${gameId}`)
         .then(res => res.json())
         .then(data => {
           if (!Array.isArray(data)) throw new Error('Invalid response');
+    
+          // Update leaderboard count badge
+          const badge = document.getElementById('viewCountBadge');
+          badge.textContent = data.length;
+          badge.classList.toggle('hidden', data.length === 0);
+    
           let html = `
             <table class="table-auto w-full text-left border">
               <thead>
                 <tr class="bg-gray-100">
+                  <th class="p-2 border">Ref</th>
                   <th class="p-2 border">Name</th>
                   <th class="p-2 border">Score</th>
                 </tr>
               </thead>
               <tbody>
-                ${data.map(player => `
+                ${data.map((player, index) => `
                   <tr>
+                    <td class="p-2 border">${index + 1}</td>
                     <td class="p-2 border">${player.name}</td>
                     <td class="p-2 border">${player.score}</td>
                   </tr>`).join('')}
               </tbody>
             </table>`;
+
           document.getElementById('leaderboardTable').innerHTML = html;
         })
         .catch(() => {
-          document.getElementById('leaderboardTable').innerHTML = `<p class="text-red-600">⚠️ Failed to fetch leaderboard</p>`;
+          document.getElementById('leaderboardTable').innerHTML = `<p class="text-red-600">⚠ Failed to fetch leaderboard data.</p>`;
+          document.getElementById('viewCountBadge').classList.add('hidden');
         });
     }
+
 
     function submitScore() {
       const baseURL = getBaseUrl();
