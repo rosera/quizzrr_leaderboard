@@ -6,6 +6,7 @@ import (
 	"github.com/rs/cors"
 	"log"
 	"net/http"
+	"net/url" // Add this import
 	"sort"
 	"strings"
 )
@@ -117,8 +118,13 @@ func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request format: /remove/{gameID}/{playerName}", http.StatusBadRequest)
 		return
 	}
+
 	gameID := vars[len(vars)-2]
-	playerName := vars[len(vars)-1]
+	playerName, err := url.PathUnescape(vars[len(vars)-1])
+	if err != nil {
+		http.Error(w, "Failed to decode player name", http.StatusBadRequest)
+		return
+	}
 
 	if gameID == "" || playerName == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -152,6 +158,7 @@ func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Player %s not found in the leaderboard for %s", playerName, gameID)
 	}
 }
+
 
 func main() {
 	// Configure the CORS middleware
