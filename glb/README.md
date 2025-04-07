@@ -1,6 +1,7 @@
 # Leaderboard
 
-## SCP Transfer
+## Transfer Data
+### SCP Transfer
 
 Transfer file to virtual machine using Ssh SCP
 __NOTE:__
@@ -10,11 +11,20 @@ External IP is not enabled, so tranfer via IAP on internal IP.
 gcloud compute scp glb arcade-leaderboard:/tmp --zone=us-central1-c --project=qwiklabs-resources
 ```
 
-## Create VM
+### Connect to Virtual Machine
+Connect to the compute instance using SSH
+
+```
+gcloud compute ssh arcade-leaderboard --zone us-central1-c
+```
+
+## Create a Service
+
+### Create VM
 
 A micro VM is required.
 
-## Install packages
+### Install packages
 
 ```bash
 #!/bin/bash
@@ -25,7 +35,7 @@ apt-get update -y
 apt-get install -y curl jq git
 ```
 
-## Add Go
+### Add Go
 ```bash
 # Download Go
 curl -LO https://go.dev/dl/go1.23.4.linux-amd64.tar.gz 
@@ -42,7 +52,7 @@ Amend main.go variable to match:
 
 Build the binary
 
-## Create a USER
+### Create a USER
 ```bash
 # Env Var
 export USER="api-dev"
@@ -51,7 +61,7 @@ export USER="api-dev"
 useradd $USER -m -p Password01 -s /bin/bash -c 'Developer Account'
 ```
 
-## Add Systemctl Process
+### Add Systemctl Process
 
 Switch to the developer account
 ```bash
