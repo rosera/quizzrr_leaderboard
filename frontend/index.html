@@ -189,7 +189,7 @@
         return;
       }
 
-      fetch(`${baseURL}/remove/${gameId}/${playerName}`, {
+      fetch(`${baseURL}/remove/${gameId}/${encodeURIComponent(playerName)}`, {
         method: 'DELETE',
       })
         .then(res => res.text().then(text => ({ ok: res.ok, status: res.status, message: text })))
