@@ -1,5 +1,15 @@
 # Leaderboard
 
+## SCP Transfer
+
+Transfer file to virtual machine using Ssh SCP
+__NOTE:__
+External IP is not enabled, so tranfer via IAP on internal IP.
+
+```
+gcloud compute scp glb arcade-leaderboard:/tmp --zone=us-central1-c --project=qwiklabs-resources
+```
+
 ## Create VM
 
 A micro VM is required.
