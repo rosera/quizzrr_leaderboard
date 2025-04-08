@@ -102,6 +102,6 @@ curl http://localhost:8080/export > leaderboards.json
 ```
 
 __EXPECTED OUTPUT__
-```
+```json
 {"test":[{"game":"test","name":"Abby","score":1000},{"game":"test","name":"Bobby","score":1000},{"game":"test","name":"Catherine","score":1000},{"game":"test","name":"Derick","score":1000},{"game":"test","name":"Ernest","score":1000},{"game":"test","name":"Fred","score":1000},{"game":"test","name":"Gisele","score":1000},{"game":"test","name":"Harold","score":1000},{"game":"test","name":"Ivonne","score":1000},{"game":"test","name":"Jack","score":1000},{"game":"test","name":"Kelly","score":1000}]
 ```
