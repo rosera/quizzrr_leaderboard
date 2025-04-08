@@ -34,14 +34,25 @@
         <h1 class="text-3xl font-bold mb-4 text-center">Leaderboard View</h1>
         <p>Use this option to view the Leaderboard information.<p>
         <input id="viewGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
-        <button onclick="viewLeaderboard()" class="bg-blue-500 text-white px-4 py-2 rounded">View Leaderboard</button>
+        <div class="flex gap-2 mb-2">
+          <button onclick="viewLeaderboard()" class="bg-blue-500 text-white px-4 py-2 rounded">View Leaderboard</button>
+          <button onclick="exportLeaderboard()" class="bg-purple-500 text-white px-4 py-2 rounded">Export</button>
+          <label class="bg-indigo-500 text-white px-4 py-2 rounded cursor-pointer">
+            Import
+            <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importLeaderboard()" />
+          </label>
+        </div>
+        <!-- Import Progress Bar -->
+        <div id="importProgressContainer" class="w-full bg-gray-200 rounded mt-2 h-4 hidden">
+          <div id="importProgressBar" class="h-4 bg-green-500 text-xs text-white text-center rounded" style="width: 0%">0%</div>
+        </div>
+
         <div id="leaderboardTable" class="mt-4 overflow-auto"></div>
         <div id="paginationControls" class="flex justify-between items-center mt-4 hidden">
           <button id="prevPageBtn" onclick="changePage(-1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Previous</button>
           <span id="pageInfo" class="text-sm text-gray-600"></span>
           <button id="nextPageBtn" onclick="changePage(1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Next</button>
         </div>
-
       </div>
 
       <!-- Submit Score Tab -->
@@ -243,6 +254,84 @@
           document.getElementById('status').textContent = "❌ Failed to remove player";
         });
     }
+
+    function exportLeaderboard() {
+      if (leaderboardData.length === 0) {
+        document.getElementById('status').textContent = "⚠ No leaderboard data to export.";
+        return;
+      }
+    
+      const gameId = document.getElementById('viewGameId').value.trim();
+      const blob = new Blob([JSON.stringify(leaderboardData, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `leaderboard_${gameId}.json`;
+      link.click();
+    }
+    
+    function importLeaderboard() {
+      const fileInput = document.getElementById('importFileInput');
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('viewGameId').value.trim();
+    
+      const progressBar = document.getElementById('importProgressBar');
+      const progressContainer = document.getElementById('importProgressContainer');
+    
+      if (!fileInput.files.length || !gameId) {
+        document.getElementById('status').textContent = "⚠ Please select a file and ensure Game ID is filled.";
+        return;
+      }
+    
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (!Array.isArray(importedData)) throw new Error("Invalid format");
+    
+          let submitted = 0;
+          let total = importedData.length;
+          progressContainer.classList.remove("hidden");
+          updateProgressBar(0, total);
+    
+          const promises = importedData.map((player, index) => {
+            return fetch(`${baseURL}/points/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                game: gameId,
+                name: player.name,
+                score: player.score
+              })
+            }).then(() => {
+              submitted++;
+              updateProgressBar(submitted, total);
+            });
+          });
+    
+          Promise.all(promises).then(() => {
+            document.getElementById('status').textContent = "✅ Import completed.";
+            setTimeout(() => {
+              progressContainer.classList.add("hidden");
+              viewLeaderboard();
+            }, 1000);
+          });
+    
+        } catch (err) {
+          document.getElementById('status').textContent = "❌ Failed to import: Invalid JSON file.";
+          progressContainer.classList.add("hidden");
+        }
+      };
+    
+      reader.readAsText(fileInput.files[0]);
+    }
+
+    function updateProgressBar(current, total) {
+      const progressBar = document.getElementById('importProgressBar');
+      const percent = Math.round((current / total) * 100);
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+    }
+
   </script>
 
 </body>
