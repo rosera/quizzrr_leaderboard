@@ -36,6 +36,12 @@
         <input id="viewGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
         <button onclick="viewLeaderboard()" class="bg-blue-500 text-white px-4 py-2 rounded">View Leaderboard</button>
         <div id="leaderboardTable" class="mt-4 overflow-auto"></div>
+        <div id="paginationControls" class="flex justify-between items-center mt-4 hidden">
+          <button id="prevPageBtn" onclick="changePage(-1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Previous</button>
+          <span id="pageInfo" class="text-sm text-gray-600"></span>
+          <button id="nextPageBtn" onclick="changePage(1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Next</button>
+        </div>
+
       </div>
 
       <!-- Submit Score Tab -->
@@ -71,6 +77,10 @@
   </div>
 
   <script>
+    let currentPage = 1;
+    let leaderboardData = [];
+    const rowsPerPage = 10;
+
     // Default tab
     switchTab('view');
 
@@ -106,36 +116,69 @@
         .then(data => {
           if (!Array.isArray(data)) throw new Error('Invalid response');
     
-          // Update leaderboard count badge
+          leaderboardData = data;
+          currentPage = 1;
+    
+          // Update badge
           const badge = document.getElementById('viewCountBadge');
           badge.textContent = data.length;
           badge.classList.toggle('hidden', data.length === 0);
     
-          let html = `
-            <table class="table-auto w-full text-left border">
-              <thead>
-                <tr class="bg-gray-100">
-                  <th class="p-2 border">Ref</th>
-                  <th class="p-2 border">Name</th>
-                  <th class="p-2 border">Score</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${data.map((player, index) => `
-                  <tr>
-                    <td class="p-2 border">${index + 1}</td>
-                    <td class="p-2 border">${player.name}</td>
-                    <td class="p-2 border">${player.score}</td>
-                  </tr>`).join('')}
-              </tbody>
-            </table>`;
-
-          document.getElementById('leaderboardTable').innerHTML = html;
+          renderLeaderboardPage();
         })
         .catch(() => {
           document.getElementById('leaderboardTable').innerHTML = `<p class="text-red-600">⚠ Failed to fetch leaderboard data.</p>`;
           document.getElementById('viewCountBadge').classList.add('hidden');
+          document.getElementById('paginationControls').classList.add('hidden');
         });
+    }
+
+
+    function renderLeaderboardPage() {
+      const tableDiv = document.getElementById('leaderboardTable');
+      const paginationDiv = document.getElementById('paginationControls');
+      const pageInfo = document.getElementById('pageInfo');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+    
+      const startIndex = (currentPage - 1) * rowsPerPage;
+      const pageData = leaderboardData.slice(startIndex, startIndex + rowsPerPage);
+    
+      let html = `
+        <table class="table-auto w-full text-left border">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 border">Ref</th>
+              <th class="p-2 border">Name</th>
+              <th class="p-2 border">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pageData.map((player, index) => `
+              <tr>
+                <td class="p-2 border">${startIndex + index + 1}</td>
+                <td class="p-2 border">${player.name}</td>
+                <td class="p-2 border">${player.score}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+    
+      tableDiv.innerHTML = html;
+    
+      const totalPages = Math.ceil(leaderboardData.length / rowsPerPage);
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+      paginationDiv.classList.toggle('hidden', totalPages <= 1);
+    }
+
+
+    function changePage(direction) {
+      const totalPages = Math.ceil(leaderboardData.length / rowsPerPage);
+      currentPage = Math.min(Math.max(currentPage + direction, 1), totalPages);
+      renderLeaderboardPage();
     }
 
 
