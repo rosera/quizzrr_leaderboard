@@ -167,6 +167,40 @@ func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func exportLeaderboards(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", "attachment; filename=leaderboards.json")
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(leaderboards)
+	if err != nil {
+		http.Error(w, "Failed to export leaderboards", http.StatusInternalServerError)
+	}
+}
+
+func importLeaderboards(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var imported map[string][]Player
+	err := json.NewDecoder(r.Body).Decode(&imported)
+	if err != nil {
+		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	leaderboards = imported
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Leaderboards successfully imported.")
+}
+
 
 func main() {
 	// Configure the CORS middleware
@@ -194,6 +228,10 @@ func main() {
 
 	// Wrap the default HTTP server with CORS middleware for remove score
 	http.Handle("/remove/", c.Handler(http.HandlerFunc(removeScoreGameLeaderboard)))
+
+	// Wrap the default HTTP server with import/export 
+	http.Handle("/export", c.Handler(http.HandlerFunc(exportLeaderboards)))
+  http.Handle("/import", c.Handler(http.HandlerFunc(importLeaderboards)))
 
 	fmt.Println("Leaderboard REST API listening on port", port)
 	// log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
