@@ -14,8 +14,6 @@ The leaderboard apis handle the following functionality:
 - [ ] user management
 
 
-
-
 ## Game Management
 
 Game management performs interaction with a defined leaderboard.
@@ -66,7 +64,6 @@ __EXAMPLE:__
 curl -X DELETE http://localhost:8080/cancels/test
 ```
 
-
 ### TEST Leaderboard
 
 ```bash
@@ -89,4 +86,43 @@ for ((i=1; i<=NUM_ITERATIONS; i++)); do
 
   sleep 5
 done
+```
+
+## Data Management
+
+Data management performs import/export for a defined leaderboard.
+
+### Import Leaderboard
+
+Enable import of leaderboard from a JSON file.
+
+```
+curl -X POST -H "Content-Type: application/json" --data-binary @leaderboards.json http://localhost:8080/import
+```
+
+
+### Export Leaderboard
+
+Enable export of leaderboard to a JSON file.
+
+```
+curl http://localhost:8080/export > leaderboards.json
+```
+
+__EXPECTED OUTPUT__
+```json
+{"test":[{"game":"test","name":"Abby","score":1000},{"game":"test","name":"Bobby","score":1000},{"game":"test","name":"Catherine","score":1000},{"game":"test","name":"Derick","score":1000},{"game":"test","name":"Ernest","score":1000},{"game":"test","name":"Fred","score":1000},{"game":"test","name":"Gisele","score":1000},{"game":"test","name":"Harold","score":1000},{"game":"test","name":"Ivonne","score":1000},{"game":"test","name":"Jack","score":1000},{"game":"test","name":"Kelly","score":1000}]
+```
+
+
+## User Management
+
+User management performs deletion of a specified user within a defined leaderboard.
+
+### Delete User
+
+The API supports deleting a user from the Leaderboard.
+
+```
+curl -X DELETE http://localhost:8080/remove/test/Rich
 ```

@@ -1,72 +1,90 @@
 # Leaderboard
 
-A quick in-memory leaderboard api to capture scores.
+## Transfer Data
+### SCP Transfer
 
-| Tool | Version |
-|------|---------|
-| Go   | 1.23    |
+Transfer file to virtual machine using Ssh SCP
+__NOTE:__
+External IP is not enabled, so tranfer via IAP on internal IP.
 
-## Configure
-```bash
-go build
+```
+gcloud compute scp glb arcade-leaderboard:/tmp --zone=us-central1-c --project=qwiklabs-resources
 ```
 
-## Run
-```bash
-./glb
+### Connect to Virtual Machine
+Connect to the compute instance using SSH
+
+```
+gcloud compute ssh arcade-leaderboard --zone us-central1-c
 ```
 
+## Create a Service
 
-## Environment 
+### Create VM
 
-A Terraform configuration is included to setup the environment.
-The compute instance will run a startup-script and install the Go executables.
+A micro VM is required.
 
-1. Move to the `tf` folder
-
-2. Initiate Terraform
-```bash
-terraform init
-```
-
-3. Validate the Terraform
-```bash
-terraform validate
-```
-
-4. Create Terraform state 
-
-Add:
-
-| Field | Description |
-|-------|-------------|
-| project | PROJECT_ID |
-| region  | PROJECT_ID |
+### Install packages
 
 ```bash
-terraform plan --out tf.state
+#!/bin/bash
+# STARTUP-START
+apt-get update -y
+
+# Update package lists and install required packages
+apt-get install -y curl jq git
 ```
 
-5. Initialise the resource using state
+### Add Go
+```bash
+# Download Go
+curl -LO https://go.dev/dl/go1.23.4.linux-amd64.tar.gz 
+
+# Install Go
+rm -rf /usr/local/go && tar -C /tmp -xzf go1.23.4.linux-amd64.tar.gz
+```
+
+Amend main.go variable to match:
+
+- [x] Internal IP of Host Machine
+- [x] PORT of Service e.g. 8080
+
+
+Build the binary
+
+### Create a USER
+```bash
+# Env Var
+export USER="api-dev"
+
+# Create a user
+useradd $USER -m -p Password01 -s /bin/bash -c 'Developer Account'
+```
+
+### Add Systemctl Process
+
+Switch to the developer account
+```bash
+sudo su -u api-dev
+```
+
+Clone the GLB repository
+```bash
+git clone https://github.com/rosera/quizzrr_leaderboard.git
+```
 
 ```bash
-terraform apply
+mkdir ~/glb && cd $_
 ```
 
-## Build Application
-
-1. Add Go to the Path
+Move the `glb` Go binary to the user account
 ```bash
-PATH=$PATH:/usr/local/bin/go/bin
+tar -xvf ~/quizzrr_leaderboard/glb/glb.tar.gz
 ```
 
-## Run as Systemd
+Create a service `glb.service`
 
-The virtual machine includes a user account `api-dev`.
-Run the application under this account.
-Use the following configuration to create a service on a Debian virtual machine.
-
-```
+```bash
 [Unit]
 Description=Quizzrr Leaderboard service
 
@@ -82,4 +100,20 @@ RestartSec=5
 StandardOutput=syslog
 StandardError=syslog
 SyslogIdentifier=%n
+```
+
+Exit the developer account
+
+```bash
+exit
+```
+
+Enable the service
+```bash
+systemctl enable glb.service
+```
+
+Start the service
+```bash
+systemctl start glb.service
 ```

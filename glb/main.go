@@ -6,6 +6,7 @@ import (
 	"github.com/rs/cors"
 	"log"
 	"net/http"
+	"net/url" // Add this import
 	"sort"
 	"strings"
 )
@@ -21,6 +22,7 @@ var (
 	// leaderboards is a map that stores leaderboards for different games
 	leaderboards = map[string][]Player{}
 	port         = 8080
+	ipAddress    = "0.0.0.0"
 )
 
 // getGameLeaderboard view the leaderboard for a specific game
@@ -104,6 +106,102 @@ func setCancelGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// removeScoreGameLeaderboard removes a player's score from the leaderboard
+func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	vars := strings.Split(r.URL.Path, "/")
+	if len(vars) < 4 {
+		http.Error(w, "Invalid request format: /remove/{gameID}/{playerName}", http.StatusBadRequest)
+		return
+	}
+
+	gameID := vars[len(vars)-2]
+	// playerName, err := url.PathUnescape(vars[len(vars)-1])
+	playerNameRaw := vars[len(vars)-1]
+  playerNameDecoded, err := url.PathUnescape(playerNameRaw)
+  if err != nil {
+  	http.Error(w, "Failed to decode player name", http.StatusBadRequest)
+  	return
+  }
+  playerName := strings.TrimSpace(playerNameDecoded)
+
+	if err != nil {
+		http.Error(w, "Failed to decode player name", http.StatusBadRequest)
+		return
+	}
+
+	if gameID == "" || playerName == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "Error: Game ID and Player Name are required")
+		return
+	}
+
+	leaderboard, ok := leaderboards[gameID]
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Leaderboard for %s not found", gameID)
+		return
+	}
+
+	found := false
+	newLeaderboard := []Player{}
+	for _, player := range leaderboard {
+		if player.Name != playerName {
+			newLeaderboard = append(newLeaderboard, player)
+		} else {
+			found = true
+		}
+	}
+
+	if found {
+		leaderboards[gameID] = newLeaderboard
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "Score for player %s in game %s removed successfully", playerName, gameID)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "Player %s not found in the leaderboard for %s", playerName, gameID)
+	}
+}
+
+func exportLeaderboards(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	w.Header().Set("Content-Disposition", "attachment; filename=leaderboards.json")
+	w.Header().Set("Content-Type", "application/json")
+
+	err := json.NewEncoder(w).Encode(leaderboards)
+	if err != nil {
+		http.Error(w, "Failed to export leaderboards", http.StatusInternalServerError)
+	}
+}
+
+func importLeaderboards(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var imported map[string][]Player
+	err := json.NewDecoder(r.Body).Decode(&imported)
+	if err != nil {
+		http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
+		return
+	}
+
+	leaderboards = imported
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Leaderboards successfully imported.")
+}
+
+
 func main() {
 	// Configure the CORS middleware
 	c := cors.New(cors.Options{
@@ -128,6 +226,14 @@ func main() {
 	// Register the handler function
 	// http.Handle("/setCancelGameLeaderboard", handlerCancel)
 
+	// Wrap the default HTTP server with CORS middleware for remove score
+	http.Handle("/remove/", c.Handler(http.HandlerFunc(removeScoreGameLeaderboard)))
+
+	// Wrap the default HTTP server with import/export 
+	http.Handle("/export", c.Handler(http.HandlerFunc(exportLeaderboards)))
+  http.Handle("/import", c.Handler(http.HandlerFunc(importLeaderboards)))
+
 	fmt.Println("Leaderboard REST API listening on port", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	// log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddress, port), nil))
 }

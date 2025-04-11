@@ -1,0 +1,10 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/$_CONTAINER_ID:$_CONTAINER_VER', '.']
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'gcr.io/$PROJECT_ID/$_CONTAINER_ID:$_CONTAINER_VER'] 
+timeout: 500s
+
+substitutions:
+  _CONTAINER_ID: quizzrr-jlb-api                # CONTAINER NAME
+  _CONTAINER_VER: 1.0.0                         # CONTAINER VERSION

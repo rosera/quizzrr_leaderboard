@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Game Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <div class="max-w-3xl mx-auto mt-10 p-6 bg-white rounded-xl shadow-md">
+    <h1 class="text-3xl font-bold mb-4 text-center">Game Manager</h1>
+
+    <!-- BASE_URL Input -->
+    <div class="mb-6">
+      <label for="baseUrl" class="block text-sm font-medium">Leaderboard Base URL</label>
+      <input type="text" id="baseUrl" placeholder="http://localhost:8080" class="border p-2 rounded w-full mt-1" />
+    </div>
+
+    <!-- Tabs -->
+    <nav class="flex space-x-4 border-b mb-4">
+      <button onclick="switchTab('view', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">
+        View <span id="viewCountBadge" class="ml-1 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button onclick="switchTab('submit', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Submit</button>
+      <button onclick="switchTab('reset', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Reset</button>
+      <button onclick="switchTab('remove', this)" class="tab-btn text-gray-600 hover:text-blue-600 pb-2 border-b-2 border-transparent">Remove</button>
+    </nav>
+
+    <div class="p-6 space-y-6">
+
+      <!-- View Leaderboard Tab -->
+      <div id="tab-view" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">Leaderboard View</h1>
+        <p>Use this option to view the Leaderboard information.<p>
+        <input id="viewGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <div class="flex gap-2 mb-2">
+          <button onclick="viewLeaderboard()" class="bg-blue-500 text-white px-4 py-2 rounded">View Leaderboard</button>
+          <button onclick="exportLeaderboard()" class="bg-purple-500 text-white px-4 py-2 rounded">Export</button>
+          <label class="bg-indigo-500 text-white px-4 py-2 rounded cursor-pointer">
+            Import
+            <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importLeaderboard()" />
+          </label>
+        </div>
+        <!-- Import Progress Bar -->
+        <div id="importProgressContainer" class="w-full bg-gray-200 rounded mt-2 h-4 hidden">
+          <div id="importProgressBar" class="h-4 bg-green-500 text-xs text-white text-center rounded" style="width: 0%">0%</div>
+        </div>
+
+        <div id="leaderboardTable" class="mt-4 overflow-auto"></div>
+        <div id="paginationControls" class="flex justify-between items-center mt-4 hidden">
+          <button id="prevPageBtn" onclick="changePage(-1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Previous</button>
+          <span id="pageInfo" class="text-sm text-gray-600"></span>
+          <button id="nextPageBtn" onclick="changePage(1)" class="bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded disabled:opacity-50">Next</button>
+        </div>
+      </div>
+
+      <!-- Submit Score Tab -->
+      <div id="tab-submit" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">User Create</h1>
+        <p>Use this option to add a user to the Leaderboard information.<p>
+        <input id="submitGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <input id="submitPlayerName" type="text" placeholder="Player Name" class="border p-2 rounded w-full mb-2" />
+        <input id="submitScore" type="number" placeholder="Score" class="border p-2 rounded w-full mb-2" />
+        <button onclick="submitScore()" class="bg-green-500 text-white px-4 py-2 rounded">Submit Score</button>
+      </div>
+
+      <!-- Reset Leaderboard Tab -->
+      <div id="tab-reset" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">Leaderboard Reset</h1>
+        <p>Use this option to reset the Leaderboard information.<p>
+        <input id="resetGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <button onclick="resetLeaderboard()" class="bg-red-500 text-white px-4 py-2 rounded">Reset Leaderboard</button>
+      </div>
+
+      <!-- Remove Player Tab -->
+      <div id="tab-remove" class="tab-content hidden">
+        <h1 class="text-3xl font-bold mb-4 text-center">User Delete</h1>
+        <p>Use this option to remove a user from the Leaderboard.<p>
+        <input id="removeGameId" type="text" placeholder="Game ID" class="border p-2 rounded w-full mb-2" />
+        <input id="removePlayerName" type="text" placeholder="Player Name" class="border p-2 rounded w-full mb-2" />
+        <button onclick="removePlayer()" class="bg-yellow-500 text-white px-4 py-2 rounded">Remove Player</button>
+      </div>
+
+      <!-- Status Message -->
+      <div id="status" class="text-sm text-gray-700 mt-4"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentPage = 1;
+    let leaderboardData = [];
+    const rowsPerPage = 10;
+
+    // Default tab
+    switchTab('view');
+
+    
+    function switchTab(tabId, button = null) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('border-blue-500', 'text-blue-600'));
+    
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    
+      // Highlight the tab button (if provided, or default to first matching tab)
+      if (button) {
+        button.classList.add('border-blue-500', 'text-blue-600');
+      } else {
+        const defaultBtn = [...document.querySelectorAll('.tab-btn')].find(btn => btn.textContent.toLowerCase().includes(tabId));
+        if (defaultBtn) defaultBtn.classList.add('border-blue-500', 'text-blue-600');
+      }
+    
+      document.getElementById('status').textContent = '';
+    }
+
+    function getBaseUrl() {
+      return document.getElementById('baseUrl').value.trim();
+    }
+
+    function viewLeaderboard() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('viewGameId').value.trim();
+      if (!gameId) return;
+    
+      fetch(`${baseURL}/games/${gameId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!Array.isArray(data)) throw new Error('Invalid response');
+    
+          leaderboardData = data;
+          currentPage = 1;
+    
+          // Update badge
+          const badge = document.getElementById('viewCountBadge');
+          badge.textContent = data.length;
+          badge.classList.toggle('hidden', data.length === 0);
+    
+          renderLeaderboardPage();
+        })
+        .catch(() => {
+          document.getElementById('leaderboardTable').innerHTML = `<p class="text-red-600">⚠ Failed to fetch leaderboard data.</p>`;
+          document.getElementById('viewCountBadge').classList.add('hidden');
+          document.getElementById('paginationControls').classList.add('hidden');
+        });
+    }
+
+
+    function renderLeaderboardPage() {
+      const tableDiv = document.getElementById('leaderboardTable');
+      const paginationDiv = document.getElementById('paginationControls');
+      const pageInfo = document.getElementById('pageInfo');
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+    
+      const startIndex = (currentPage - 1) * rowsPerPage;
+      const pageData = leaderboardData.slice(startIndex, startIndex + rowsPerPage);
+    
+      let html = `
+        <table class="table-auto w-full text-left border">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 border">Ref</th>
+              <th class="p-2 border">Name</th>
+              <th class="p-2 border">Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pageData.map((player, index) => `
+              <tr>
+                <td class="p-2 border">${startIndex + index + 1}</td>
+                <td class="p-2 border">${player.name}</td>
+                <td class="p-2 border">${player.score}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      `;
+    
+      tableDiv.innerHTML = html;
+    
+      const totalPages = Math.ceil(leaderboardData.length / rowsPerPage);
+      pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
+    
+      prevBtn.disabled = currentPage === 1;
+      nextBtn.disabled = currentPage === totalPages;
+      paginationDiv.classList.toggle('hidden', totalPages <= 1);
+    }
+
+
+    function changePage(direction) {
+      const totalPages = Math.ceil(leaderboardData.length / rowsPerPage);
+      currentPage = Math.min(Math.max(currentPage + direction, 1), totalPages);
+      renderLeaderboardPage();
+    }
+
+
+    function submitScore() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('submitGameId').value.trim();
+      const playerName = document.getElementById('submitPlayerName').value.trim();
+      const score = parseInt(document.getElementById('submitScore').value.trim());
+
+      if (!gameId || !playerName || isNaN(score)) {
+        document.getElementById('status').textContent = "⚠️ All fields are required for submitting a score.";
+        return;
+      }
+
+      fetch(`${baseURL}/points/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ game: gameId, name: playerName, score })
+      })
+        .then(res => res.json())
+        .then(() => {
+          document.getElementById('status').textContent = "✅ Score submitted successfully!";
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to submit score.";
+        });
+    }
+
+    function resetLeaderboard() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('resetGameId').value.trim();
+      if (!gameId) return;
+
+      fetch(`${baseURL}/cancels/${gameId}`)
+        .then(res => res.text())
+        .then(message => {
+          document.getElementById('status').textContent = `✅ ${message}`;
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to reset leaderboard.";
+        });
+    }
+
+    function removePlayer() {
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('removeGameId').value.trim();
+      const playerName = document.getElementById('removePlayerName').value.trim();
+
+      if (!gameId || !playerName) {
+        document.getElementById('status').textContent = "⚠️ Game ID and Player Name are required.";
+        return;
+      }
+
+      fetch(`${baseURL}/remove/${gameId}/${encodeURIComponent(playerName)}`, {
+        method: 'DELETE',
+      })
+        .then(res => res.text().then(text => ({ ok: res.ok, status: res.status, message: text })))
+        .then(({ ok, message }) => {
+          document.getElementById('status').textContent = ok ? `✅ ${message}` : `❌ ${message}`;
+        })
+        .catch(() => {
+          document.getElementById('status').textContent = "❌ Failed to remove player";
+        });
+    }
+
+    function exportLeaderboard() {
+      if (leaderboardData.length === 0) {
+        document.getElementById('status').textContent = "⚠ No leaderboard data to export.";
+        return;
+      }
+    
+      const gameId = document.getElementById('viewGameId').value.trim();
+      const blob = new Blob([JSON.stringify(leaderboardData, null, 2)], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `leaderboard_${gameId}.json`;
+      link.click();
+    }
+    
+    function importLeaderboard() {
+      const fileInput = document.getElementById('importFileInput');
+      const baseURL = getBaseUrl();
+      const gameId = document.getElementById('viewGameId').value.trim();
+    
+      const progressBar = document.getElementById('importProgressBar');
+      const progressContainer = document.getElementById('importProgressContainer');
+    
+      if (!fileInput.files.length || !gameId) {
+        document.getElementById('status').textContent = "⚠ Please select a file and ensure Game ID is filled.";
+        return;
+      }
+    
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        try {
+          const importedData = JSON.parse(e.target.result);
+          if (!Array.isArray(importedData)) throw new Error("Invalid format");
+    
+          let submitted = 0;
+          let total = importedData.length;
+          progressContainer.classList.remove("hidden");
+          updateProgressBar(0, total);
+    
+          const promises = importedData.map((player, index) => {
+            return fetch(`${baseURL}/points/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                game: gameId,
+                name: player.name,
+                score: player.score
+              })
+            }).then(() => {
+              submitted++;
+              updateProgressBar(submitted, total);
+            });
+          });
+    
+          Promise.all(promises).then(() => {
+            document.getElementById('status').textContent = "✅ Import completed.";
+            setTimeout(() => {
+              progressContainer.classList.add("hidden");
+              viewLeaderboard();
+            }, 1000);
+          });
+    
+        } catch (err) {
+          document.getElementById('status').textContent = "❌ Failed to import: Invalid JSON file.";
+          progressContainer.classList.add("hidden");
+        }
+      };
+    
+      reader.readAsText(fileInput.files[0]);
+    }
+
+    function updateProgressBar(current, total) {
+      const progressBar = document.getElementById('importProgressBar');
+      const percent = Math.round((current / total) * 100);
+      progressBar.style.width = `${percent}%`;
+      progressBar.textContent = `${percent}%`;
+    }
+
+  </script>
+
+</body>
+</html>
+
