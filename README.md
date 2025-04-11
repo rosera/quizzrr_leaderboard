@@ -9,9 +9,9 @@ A simple (in-memory) leaderboard implemented in:
 
 The leaderboard apis handle the following functionality:
 
-- [ ] game management
-- [ ] data management
-- [ ] user management
+- [ ] [Game Management](https://github.com/rosera/quizzrr_leaderboard/tree/main?tab=readme-ov-file#game-management)
+- [ ] [Data Management](https://github.com/rosera/quizzrr_leaderboard/tree/main?tab=readme-ov-file#data-management)
+- [ ] [User Management](https://github.com/rosera/quizzrr_leaderboard/tree/main?tab=readme-ov-file#user-management)
 
 
 ## Game Management
