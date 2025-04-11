@@ -7,30 +7,20 @@ A simple (in-memory) leaderboard implemented in:
 
 ![API Architecture](https://github.com/rosera/quizzrr_leaderboard/blob/main/screenshots/glb-http-api.png "Architecture")
 
-The Leaderboard APIs are functionally equivalent.
+The leaderboard apis handle the following functionality:
 
-An array is defined for each game dataset.
-
-```json
-[
-  {
-    "game": "test",
-    "name": "John Doe",
-    "score": 100
-  }
-]
-```
-
-JSON format includes :
-
-| Field | Description |
-|-------|-------------|
-| game  | game identifier |
-| name  | user identifier |
-| score | points allocation |
+- [ ] game management
+- [ ] data management
+- [ ] user management
 
 
-## LIST Leaderboard
+
+
+## Game Management
+
+Game management performs interaction with a defined leaderboard.
+
+###  LIST Leaderboard
 
 The API supports listing gameID Leaderboard entries.
 
@@ -43,7 +33,7 @@ __EXAMPLE:__
 curl -X GET http://localhost:8080/games/test
 ```
 
-## ADD Leaderboard
+### ADD Leaderboard
 
 The API supports adding gameID Leaderboard point entries.
 
@@ -63,7 +53,7 @@ __EXPECTED OUTPUT__
 [{"game":"test","name":"Rich","score":1000}]
 ```
 
-## DELETE Leaderboard
+### DELETE Leaderboard
 
 The API supports deleting gameID Leaderboard.
 
@@ -74,4 +64,29 @@ The API uses the route signature `/cancels/{id}` where id is the gameID.
 __EXAMPLE:__
 ```bash
 curl -X DELETE http://localhost:8080/cancels/test
+```
+
+
+### TEST Leaderboard
+
+```bash
+#!/bin/bash
+
+if [[ -z "$1" || -z "$2" ]]; then
+  echo "Usage: `basename "$0"` <GAME> <ENDPOINT>"
+  echo "  Example: `basename "$0"` 'game1' 'https://api.example.com/game1'"
+  exit 1
+fi
+
+GAME="$1"
+ENDPOINT="$2"
+
+# Set the number of times to run the loop
+NUM_ITERATIONS=5
+
+for ((i=1; i<=NUM_ITERATIONS; i++)); do
+  curl -X POST "$ENDPOINT"/points/"$GAME" -H "Content-Type: application/json" -d '{ "game": "$GAME", "name": "tester-$i", "score": 1000 }'
+
+  sleep 5
+done
 ```
