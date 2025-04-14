@@ -217,6 +217,25 @@ func importLeaderboards(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Leaderboards successfully imported.")
 }
 
+// listGamesHandler returns a list of all available game IDs.
+func listGamesHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	games := make([]string, 0, len(leaderboards))
+	for gameID := range leaderboards {
+		games = append(games, gameID)
+	}
+	sort.Strings(games) // Sort the game IDs for consistent output
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(games); err != nil {
+		http.Error(w, "Failed to encode game list", http.StatusInternalServerError)
+	}
+}
+
 func main() {
 	// Load configuration from YAML file
 	configFile := "glb.yaml" // You can change the filename here
@@ -240,6 +259,9 @@ func main() {
 	http.Handle("/remove/", c.Handler(http.HandlerFunc(removeScoreGameLeaderboard)))
 	http.Handle("/export", c.Handler(http.HandlerFunc(exportLeaderboards)))
 	http.Handle("/import", c.Handler(http.HandlerFunc(importLeaderboards)))
+
+	// Add the new handler for listing games
+	http.Handle("/list", c.Handler(http.HandlerFunc(listGamesHandler)))
 
 	fmt.Println("Leaderboard REST API listening on", fmt.Sprintf("%s:%d", config.Server.IP, config.Server.Port))
 
