@@ -1,5 +1,19 @@
 # Google Compute Engine Reverse Proxy
 
+Overview of how to create a Reverse Proxy using Cloud Run VPC Direct.
+The backend resource is a Compute Engine instance.
+
+## VPC Direct
+
+Using Cloud Run and Compute Engine, both need to be in the same __REGION__.
+
+-  [ ] Region
+
+
+## CloudBuild
+
+For the Reverse Proxy example, NGINX is used:
+
 Nginx redirect to backend compute service
 
 - [x] Amend HOST_IP
