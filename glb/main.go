@@ -4,12 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/rs/cors"
+	"gopkg.in/yaml.v3" // Import the YAML library
 	"log"
 	"net/http"
-	"net/url" // Add this import
+	"net/url"
+	"os"
 	"sort"
 	"strings"
 )
+
+// Config struct to hold the IP and Port from the YAML file
+type Config struct {
+	Server struct {
+		IP   string `yaml:"ip"`
+		Port int    `yaml:"port"`
+	} `yaml:"server"`
+}
 
 // Player represents an entry in the leaderboard
 type Player struct {
@@ -21,9 +31,21 @@ type Player struct {
 var (
 	// leaderboards is a map that stores leaderboards for different games
 	leaderboards = map[string][]Player{}
-	port         = 8080
-	ipAddress    = "0.0.0.0"
+	config       Config
 )
+
+// loadConfig reads the configuration from the specified YAML file
+func loadConfig(filename string) error {
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+	err = yaml.Unmarshal(data, &config)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+	return nil
+}
 
 // getGameLeaderboard view the leaderboard for a specific game
 func getGameLeaderboard(w http.ResponseWriter, r *http.Request) {
@@ -120,19 +142,13 @@ func removeScoreGameLeaderboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	gameID := vars[len(vars)-2]
-	// playerName, err := url.PathUnescape(vars[len(vars)-1])
 	playerNameRaw := vars[len(vars)-1]
-  playerNameDecoded, err := url.PathUnescape(playerNameRaw)
-  if err != nil {
-  	http.Error(w, "Failed to decode player name", http.StatusBadRequest)
-  	return
-  }
-  playerName := strings.TrimSpace(playerNameDecoded)
-
+	playerNameDecoded, err := url.PathUnescape(playerNameRaw)
 	if err != nil {
 		http.Error(w, "Failed to decode player name", http.StatusBadRequest)
 		return
 	}
+	playerName := strings.TrimSpace(playerNameDecoded)
 
 	if gameID == "" || playerName == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -201,8 +217,14 @@ func importLeaderboards(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Leaderboards successfully imported.")
 }
 
-
 func main() {
+	// Load configuration from YAML file
+	configFile := "glb.yaml" // You can change the filename here
+	err := loadConfig(configFile)
+	if err != nil {
+		log.Fatalf("Error loading %s configuration: %v", configFile, err)
+	}
+
 	// Configure the CORS middleware
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"*"}, // Replace "*" with specific origins in production
@@ -213,27 +235,15 @@ func main() {
 
 	// Wrap the default HTTP server with CORS middleware
 	http.Handle("/games/", c.Handler(http.HandlerFunc(getGameLeaderboard)))
-	// Register the handler function
-	// http.Handle("/getGameLeaderboard", handlerLeaderboard)
-
-	// Wrap the default HTTP server with CORS middleware
 	http.Handle("/points/", c.Handler(http.HandlerFunc(setScoreGameLeaderboard)))
-	// Register the handler function
-	// http.Handle("/setScoreGameLeaderboard", handlerScores)
-
-	// Wrap the default HTTP server with CORS middleware
 	http.Handle("/cancels/", c.Handler(http.HandlerFunc(setCancelGameLeaderboard)))
-	// Register the handler function
-	// http.Handle("/setCancelGameLeaderboard", handlerCancel)
-
-	// Wrap the default HTTP server with CORS middleware for remove score
 	http.Handle("/remove/", c.Handler(http.HandlerFunc(removeScoreGameLeaderboard)))
-
-	// Wrap the default HTTP server with import/export 
 	http.Handle("/export", c.Handler(http.HandlerFunc(exportLeaderboards)))
-  http.Handle("/import", c.Handler(http.HandlerFunc(importLeaderboards)))
+	http.Handle("/import", c.Handler(http.HandlerFunc(importLeaderboards)))
 
-	fmt.Println("Leaderboard REST API listening on port", port)
-	// log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), nil))
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ipAddress, port), nil))
+	fmt.Println("Leaderboard REST API listening on", fmt.Sprintf("%s:%d", config.Server.IP, config.Server.Port))
+
+	// TCP: IPv6 + IPv4 wildcards
+	// Reverse proxy: ensure IP is set to the Host IP not a Wildcard
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", config.Server.IP, config.Server.Port), nil))
 }

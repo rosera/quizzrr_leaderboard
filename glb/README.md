@@ -42,6 +42,9 @@ curl -LO https://go.dev/dl/go1.23.4.linux-amd64.tar.gz
 
 # Install Go
 rm -rf /usr/local/go && tar -C /tmp -xzf go1.23.4.linux-amd64.tar.gz
+
+# Use Go Build for Linux Platform
+CGO_ENABLED=0 GOOS=linux go build -o glb
 ```
 
 Amend main.go variable to match:

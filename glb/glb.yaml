@@ -1,0 +1,3 @@
+server:
+  ip: "0.0.0.0"   # Replace with the IP address you want to use (e.g., "0.0.0.0" or "192.168.1.10")
+  port: 8080       # Replace with the port you want to use
